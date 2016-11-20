@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!-- Project:	visulating
+==== Author:	Jeevan Khaira
+==== Copyright:	(c) 2016 Jeevan Khaira - All Rights Reserved
+~-->
+<html>
+<head>
+<title>Visulating</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width" name="viewport">
+<meta content="yes" name="mobile-web-app-capable">
+<meta content="yes" name="apple-mobile-web-app-capable">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<style type="text/css">
+html,body
+	{width:100%;
+	 height:100%;
+	 margin:0;
+	 padding:0;
+	 font:1em "Open Sans", sans-serif;
+	 background-color:orange;}
+h1
+  {color:white;
+   text-align:center;}
+#brain
+  {width:50%;
+   max-width:300px;
+   display:block;
+   margin:25vh auto;
+   position:relative;
+   top:30px;
+   z-index:1;}
+#arrows
+  {width:100%;
+   height:100%;
+   position:absolute;
+   top:0;
+   z-index:0;}
+.arrow
+  {position:absolute;}
+#arrow1
+  {transform: rotate(0.125turn);
+   top:35%;
+   right:35%;}
+#arrow2
+  {transform: rotate(0.375turn);
+   bottom:35%;
+   right:35%;}
+#arrow3
+  {transform:rotate(0.625turn);
+   bottom:35%;
+   left:35%;}
+#arrow4
+  {transform:rotate(0.875turn);
+   top:35%;
+   left:35%;}
+.target2
+  {display:none;}
+.target1,.target2,.target-text
+  {height:7em;
+   width:7em;}
+.target1,.target2
+  {border-radius:50%;
+   background-color:#a0a0ff;
+   border:5px solid blue;
+   color:red;
+   position:absolute;}
+.drop-active
+  {border-style:dashed;}
+.drop-target
+  {background-color: #29e;
+   border-color: #fff;
+   border-style: solid;}
+.target-text
+  {text-align:center;
+   display:table-cell;
+   vertical-align:middle;}
+.one-of-four
+  {top:10%;
+   left:10%;}
+.two-of-four
+  {top:10%;
+   right:10%;}
+.three-of-four
+  {bottom:10%;
+   left:10%;}
+.four-of-four
+  {bottom:10%;
+   right:10%;}
+</style>
+</head>
+<body>
+<h1>Visulating</h1>
+<img class="draggable" id="brain" src="/img/brain.svg" />
+<div id="arrows">
+  <img class="arrow" id="arrow1" src="/img/arrow.svg" />
+  <img class="arrow" id="arrow2" src="/img/arrow.svg" />
+  <img class="arrow" id="arrow3" src="/img/arrow.svg" />
+  <img class="arrow" id="arrow4" src="/img/arrow.svg" />
+</div>
+<div class="target1 one-of-four dropzone" id="target1"><div class="target-text">Videos</div></div>
+<div class="target1 two-of-four dropzone" id="target2"><div class="target-text">Learn More</div></div>
+<div class="target1 three-of-four dropzone" id="target3"><div class="target-text">Q & A</div></div>
+<div class="target1 four-of-four dropzone" id="target4"><div class="target-text">Advice</div></div>
+<div class="target2 one-of-four dropzone" id="target2-1"><div class="target-text">Expert</div></div>
+<div class="target2 two-of-four dropzone" id="target2-2"><div class="target-text">How To</div></div>
+<div class="target2 three-of-four dropzone" id="target2-3"><div class="target-text">Subject</div></div>
+<!-- jQuery -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<!-- when js -->
+	<script src="https://npmcdn.com/when/dist/browser/when.js"></script>
+<!-- interact js -->
+	<script src="/js/interact.min.js"></script>
+<!-- custom script -->
+<script>
+(function($){
+// target elements with the "draggable" class
+interact('.draggable')
+  .draggable({
+    // enable inertial throwing
+    inertia: true,
+    // keep the element within the area of it's parent
+    restrict: {
+      restriction: "parent",
+      endOnly: true,
+      elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+    },
+    // enable autoScroll
+    autoScroll: false,
+
+    // call this function on every dragmove event
+    onmove: dragMoveListener,
+    // call this function on every dragend event
+    onend: function (event) {
+      $('#brain').css('transform','translate(0px,0px)');
+      event.target.setAttribute('data-x',0);
+      event.target.setAttribute('data-y',0);
+    }
+  });
+
+  function dragMoveListener (event) {
+    var target = event.target,
+        // keep the dragged position in the data-x/data-y attributes
+        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+        y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+    // translate the element
+    target.style.webkitTransform =
+    target.style.transform =
+      'translate(' + x + 'px, ' + y + 'px)';
+
+    // update the posiion attributes
+    target.setAttribute('data-x', x);
+    target.setAttribute('data-y', y);
+  }
+
+  // this is used later in the resizing and gesture demos
+  window.dragMoveListener = dragMoveListener;
+
+// enable draggables to be dropped into this
+interact('.dropzone').dropzone({
+  // only accept elements matching this CSS selector
+  accept: '.draggable',
+  // Require a 75% element overlap for a drop to be possible
+  overlap: 0.3,
+
+  // listen for drop related events:
+
+  ondropactivate: function (event) {
+    // add active dropzone feedback
+    event.target.classList.add('drop-active');
+  },
+  ondragenter: function (event) {
+    var draggableElement = event.relatedTarget,
+        dropzoneElement = event.target;
+
+    // feedback the possibility of a drop
+    dropzoneElement.classList.add('drop-target');
+    draggableElement.classList.add('can-drop');
+    draggableElement.textContent = 'Dragged in';
+  },
+  ondragleave: function (event) {
+    // remove the drop feedback style
+    event.target.classList.remove('drop-target');
+    event.relatedTarget.classList.remove('can-drop');
+    event.relatedTarget.textContent = 'Dragged out';
+  },
+  ondrop: function (event) {
+    event.relatedTarget.textContent = 'Dropped';
+    $('.target1,.target2')
+      .removeClass('drop-active')
+      .removeClass('drop-target')
+      .toggle();
+  },
+  ondropdeactivate: function (event) {
+    // remove active dropzone feedback
+    event.target.classList.remove('drop-active');
+    event.target.classList.remove('drop-target');
+  }
+});
+
+})(jQuery);
+</script>
+</body>
+</html>
